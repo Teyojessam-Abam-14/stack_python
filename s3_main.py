@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import boto3,sys,json,os
-from s3_boto3 import delete_s3_bucket
+from s3_boto3 import create_s3_bucket, upload_file_to_s3
 
 if __name__=="__main__": 
  #s3_function=sys.argv[1]
@@ -20,7 +20,15 @@ if __name__=="__main__":
  #Calling the S3 service using assumed role credentials
  s3=boto3.client('s3', aws_access_key_id=credentials['AccessKeyId'], aws_secret_access_key=credentials['SecretAccessKey'], aws_session_token=credentials['SessionToken'], region_name='us-east-1')
  
- #Calling delete bucket function
- delete_s3_bucket(s3, 'teejay-s3')
+ #Variables
+ bucket_name='teejay-3'
+ file_path='./s3_file_for_upload.txt'
+ object_name='S3 file'
+ 
+ #Calling create bucket function
+ create_s3_bucket(s3, bucket_name)
+ 
+ #Uploading files to created bucket
+ upload_file_to_s3(s3, file_path, bucket_name, object_name)
  
  
