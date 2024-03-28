@@ -5,7 +5,7 @@ import boto3,sys,json,os
 def create_s3_bucket(s3,bucket_name):
     s3.create_bucket(
         Bucket=bucket_name,
-        ObjectLockEnabledForBucket=True
+        ObjectLockEnabledForBucket=False
     )
 
 #Delete Bucket
@@ -48,4 +48,40 @@ def list_s3_bucket(s3,bucket_name):
         for obj in object_list["Contents"]:
            objects.append({"Key": obj["Key"]})
         print(objects)
-    
+        
+#Object locking
+def object_lock(s3, new_object_lock_bucket):
+#Created a new bucket where Object Locking is Enabled
+  create_s3_bucket(s3,new_object_lock_bucket)
+  
+  s3.put_object_lock_configuration(
+    Bucket=new_object_lock_bucket,
+    ObjectLockConfiguration={
+        'ObjectLockEnabled': 'Enabled',
+        'Rule': {
+            'DefaultRetention': {
+                'Mode': 'GOVERNANCE',
+                'Days': 30
+            }
+        }
+    }
+  )
+        
+
+#Enable versioning
+def enable_bucket_versioning(s3,bucket_name):
+    s3.put_bucket_versioning(
+        Bucket=bucket_name,
+        VersioningConfiguration={
+            'Status': 'Enabled'
+        }
+    )
+
+#Disable versioning
+def disable_bucket_versioning(s3,bucket_name):
+    s3.put_bucket_versioning(
+        Bucket=bucket_name,
+        VersioningConfiguration={
+            'Status': 'Suspended'
+        }
+    )
