@@ -111,4 +111,21 @@ def disable_s3_bucket_encryption(s3,bucket_name):
     s3.delete_bucket_encryption(
     Bucket=bucket_name
 )
+    
+def enable_access_logging(s3, bucket_name):
+    # Create the target bucket if haven't already
+    create_s3_bucket(s3, "{}-logs".format(bucket_name))
+    
+    #Define logging configuration
+    logging_config={
+        'LoggingEnabled': {
+            'TargetBucket': "{}-logs".format(bucket_name),
+            'TargetPrefix': "logs/"
+        }
+    }
+
+    s3.put_bucket_logging(
+        Bucket=bucket_name,
+        BucketLoggingStatus=logging_config
+    )
 
