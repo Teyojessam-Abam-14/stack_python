@@ -2,6 +2,7 @@
 import boto3,sys,json,os
 from s3_boto3 import create_s3_bucket, delete_s3_bucket, upload_file_to_s3, empty_s3_bucket, list_s3_bucket
 from s3_boto3 import enable_bucket_versioning, disable_bucket_versioning, object_lock
+from s3_boto3 import enable_s3_bucket_KMS_encryption, disable_s3_bucket_encryption
 
 if __name__=="__main__": 
  #s3_function=sys.argv[1]
@@ -26,12 +27,12 @@ if __name__=="__main__":
  file_paths=['./s3_file_for_upload.txt', './s3_file_for_upload_2.txt']
  object_name='S3_file'
  
- #Enable versioning
- #enable_bucket_versioning(s3,bucket_name)
  
- #Disable versioning
- disable_bucket_versioning(s3,bucket_name)
+ #Enabling default encryption
+ #enable_s3_bucket_KMS_encryption(s3,bucket_name)
  
+ #Disabling all S3 bucket encryption
+ disable_s3_bucket_encryption(s3,bucket_name)
 
  
  

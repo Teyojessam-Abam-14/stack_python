@@ -85,3 +85,30 @@ def disable_bucket_versioning(s3,bucket_name):
             'Status': 'Suspended'
         }
     )
+    
+def enable_s3_bucket_KMS_encryption(s3,bucket_name):
+
+    # Define the KMS encryption configuration
+    default_encryption={
+        'Rules': [
+            {
+                'ApplyServerSideEncryptionByDefault': {
+                    'SSEAlgorithm': 'aws:kms',
+                    'KMSMasterKeyID': 'arn:aws:kms:us-east-1:721636561061:key/67fb8dab-60e7-46b0-986c-bbc500d80246'
+                }
+            }
+        ]
+    }
+    #Apply KMS encryption
+    s3.put_bucket_encryption(
+            Bucket=bucket_name,
+            ServerSideEncryptionConfiguration=default_encryption
+        )
+
+    
+#Disable all S3 bucket encryption
+def disable_s3_bucket_encryption(s3,bucket_name):
+    s3.delete_bucket_encryption(
+    Bucket=bucket_name
+)
+
