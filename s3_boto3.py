@@ -14,9 +14,6 @@ def delete_s3_bucket(s3,bucket_name):
         Bucket=bucket_name
     )
    
-#Upload files to S3
-def upload_file_to_s3(s3, file_path, bucket_name, object_name):
-    s3.upload_file(file_path, bucket_name, object_name, ExtraArgs={'ContentType': 'text/html'})
     
 #Empty Bucket
 def empty_s3_bucket(s3,bucket_name):
@@ -33,4 +30,22 @@ def empty_s3_bucket(s3,bucket_name):
             Bucket=bucket_name,
             Delete={"Objects": objects}
         )
+        
+#Upload files to S3
+def upload_file_to_s3(s3, file_paths, bucket_name, object_name):
+    count=0
+    for file in file_paths:
+        count=count+1
+        s3.upload_file(file, bucket_name, "{}_{}".format(object_name, count), ExtraArgs={'ContentType': 'text/html'})
+        
+#List Bucket
+def list_s3_bucket(s3,bucket_name):
+    
+    object_list=s3.list_objects_v2(Bucket=bucket_name)
+    
+    if "Contents" in object_list:
+        objects=[]
+        for obj in object_list["Contents"]:
+           objects.append({"Key": obj["Key"]})
+        print(objects)
     

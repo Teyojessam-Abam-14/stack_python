@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import boto3,sys,json,os
-from s3_boto3 import create_s3_bucket, upload_file_to_s3, empty_s3_bucket
+from s3_boto3 import create_s3_bucket, upload_file_to_s3, empty_s3_bucket, list_s3_bucket
 
 if __name__=="__main__": 
  #s3_function=sys.argv[1]
@@ -22,13 +22,16 @@ if __name__=="__main__":
  
  #Variables
  bucket_name='teejay-3'
- file_path='./s3_file_for_upload.txt'
- object_name='S3 file'
+ file_paths=['./s3_file_for_upload.txt', './s3_file_for_upload_2.txt']
+ object_name='S3_file'
  
- #Emptying bucket
- empty_s3_bucket(s3,bucket_name)
+ #Uploading files to bucket
+ upload_file_to_s3(s3, file_paths, bucket_name, object_name)
+     
+ #List S3 bucket
+ list_s3_bucket(s3,bucket_name)
  
- #Calling create bucket function
+
  
  
  
