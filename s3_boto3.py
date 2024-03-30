@@ -114,13 +114,38 @@ def disable_s3_bucket_encryption(s3,bucket_name):
     
 def enable_access_logging(s3, bucket_name):
     # Create the target bucket if haven't already
-    create_s3_bucket(s3, "{}-logs".format(bucket_name))
+    create_s3_bucket(s3, '{}-access-logs'.format(bucket_name))
+    
+    #Defining and assdding bucket policy to write logs into target bucket
+    bucket_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "s3.amazonaws.com"
+                },
+                "Action": "s3:PutObject",
+                "Resource": "arn:aws:s3:::{}/logs/*".format('{}-access-logs'.format(bucket_name)),
+                "Condition": {
+                    "StringEquals": {
+                        "s3:x-amz-acl": "bucket-owner-full-control"
+                    }
+                }
+            }
+        ]
+    }
+    
+    s3.put_bucket_policy(
+        Bucket=bucket_name,
+        Policy=json.dumps(bucket_policy)
+    )
     
     #Define logging configuration
     logging_config={
         'LoggingEnabled': {
-            'TargetBucket': "{}-logs".format(bucket_name),
-            'TargetPrefix': "logs/"
+            'TargetBucket': '{}-access-logs'.format(bucket_name),
+            'TargetPrefix': 'logs/'
         }
     }
 
@@ -128,4 +153,72 @@ def enable_access_logging(s3, bucket_name):
         Bucket=bucket_name,
         BucketLoggingStatus=logging_config
     )
+
+
+#Add bucket policy for object logging via CloudTrail
+def update_bucket_policy(s3, bucket_name, account_id):
+
+    # Define the bucket policy
+    bucket_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "AWSCloudTrailAclCheck20150319",
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "cloudtrail.amazonaws.com"
+                },
+                "Action": "s3:GetBucketAcl",
+                "Resource": "arn:aws:s3:::{}".format(bucket_name)
+            },
+            {
+                "Sid": "AWSCloudTrailWrite20150319",
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "cloudtrail.amazonaws.com"
+                },
+                "Action": "s3:PutObject",
+                "Resource": "arn:aws:s3:::{}/AWSLogs/{}/*".format(bucket_name, account_id),
+                "Condition": {
+                    "StringEquals": {
+                        "s3:x-amz-acl": "bucket-owner-full-control"
+                    }
+                }
+            }
+        ]
+    }
+
+    # Convert the bucket policy to a JSON string
+    bucket_policy_json = json.dumps(bucket_policy)
+
+    # Set the bucket policy
+    s3.put_bucket_policy(
+        Bucket=bucket_name,
+        Policy=bucket_policy_json
+    )
+    
+#Enable object-level logging via CloudTrail
+def enable_object_logging_via_cloudtrail(cloudtrail_client, bucket_name):
+    # Define the CloudTrail trail name
+    trail_name="object-level-logging-trail-for-{}".format(bucket_name)
+
+    # Create CloudTrail logs for existing S3 bucket
+    cloudtrail_client.create_trail(
+        Name=trail_name,
+        S3BucketName=bucket_name,
+        IsMultiRegionTrail=True,  # Enable multi-region trail for cross-region logs
+        EnableLogFileValidation=True
+    )
+
+    # Start the CloudTrail trail
+    cloudtrail_client.start_logging(Name=trail_name)
+    
+
+
+
+
+
+    
+
+    
 
