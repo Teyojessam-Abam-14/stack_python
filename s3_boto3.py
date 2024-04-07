@@ -213,12 +213,56 @@ def enable_object_logging_via_cloudtrail(cloudtrail_client, bucket_name):
     # Start the CloudTrail trail
     cloudtrail_client.start_logging(Name=trail_name)
     
+#Upload files to S3 website
+def upload_file_to_s3_website(s3, file, bucket_name, object_name):
+    s3.upload_file(file, bucket_name, object_name, ExtraArgs={'ContentType': 'text/html'})
+    
+#Add all S3 bucket policies
+def update_bucket_policy_to_s3_website(s3, bucket_name):
+
+    # Define the bucket policy
+    bucket_policy = {
+          "Id": "Policy1712440716296",
+          "Version": "2012-10-17",
+          "Statement": [
+             {
+              "Sid": "Stmt1712440604300",
+              "Action": "s3:*",
+              "Effect": "Allow",
+              "Resource": "arn:aws:s3:::{}/*".format(bucket_name),
+              "Principal": "*"
+            }
+          ]
+       }   
 
 
+    # Convert the bucket policy to a JSON string
+    bucket_policy_json = json.dumps(bucket_policy)
 
+    # Set the bucket policy
+    s3.put_bucket_policy(
+        Bucket=bucket_name,
+        Policy=bucket_policy_json
+    )
+    
+#Configure static website hosting
+def configure_static_website_hosting(s3, bucket_name, index_document):
+        
+    #Upload index file if haven't already
+    upload_file_to_s3_website(s3, index_document, bucket_name, 'index.html')
+    
+    # Configure the bucket for static website hosting
+    website_config={
+        'IndexDocument': {'Suffix': 'index.html'}
+    }
+
+    s3.put_bucket_website(
+        Bucket=bucket_name, 
+        WebsiteConfiguration=website_config
+    )
+    
 
 
     
 
     
-
