@@ -1,19 +1,29 @@
 #!/usr/bin/python
 import boto3,sys,json,os
 
-#Create Bucket
-def create_s3_bucket(s3,bucket_name):
+#Create Source Bucket
+def create_s3_bucket_source(s3,bucket_name):
     s3.create_bucket(
         Bucket=bucket_name,
         ObjectLockEnabledForBucket=False
     )
+    
+#Create Destination Bucket 
+def create_s3_bucket_dest(s3,bucket_name,region):
+    s3.create_bucket(
+        Bucket=bucket_name,
+        ObjectLockEnabledForBucket=False,
+        CreateBucketConfiguration={
+        'LocationConstraint': '{}'.format(region),
+      }
+    )
+#NB: Only specify 'LocationConstraint' when using another region that is not the default region
 
 #Delete Bucket
 def delete_s3_bucket(s3,bucket_name):
    s3.delete_bucket(
         Bucket=bucket_name
-    )
-   
+    )  
     
 #Empty Bucket
 def empty_s3_bucket(s3,bucket_name):
@@ -156,7 +166,7 @@ def enable_access_logging(s3, bucket_name):
 
 
 #Add bucket policy for object logging via CloudTrail
-def update_bucket_policy(s3, bucket_name, account_id):
+def update_bucket_policy_for_obj_logging(s3, bucket_name, account_id):
 
     # Define the bucket policy
     bucket_policy = {
@@ -380,10 +390,18 @@ def add_policy_to_dest_bucket(s3, dest_bucket_name):
         Policy=bucket_policy_json
     )
     
+    
+   
+    
+
+
+
+
+
+
+    
 
     
 
 
-    
-
-    
+   
