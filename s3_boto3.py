@@ -261,6 +261,127 @@ def configure_static_website_hosting(s3, bucket_name, index_document):
         WebsiteConfiguration=website_config
     )
     
+#Attaching policy to S3 Engineering role
+def add_policy_to_s3_eng_role(iam, source_bucket_name, dest_bucket_name):
+  
+  #Adding S3 replication permissions to Engineering (source) role 
+  iam_policy={
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "SourceBucketPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObjectRetention",
+        "s3:GetObjectVersionTagging",
+        "s3:GetObjectVersionAcl",
+        "s3:ListBucket",
+        "s3:GetObjectVersionForReplication",
+        "s3:GetObjectLegalHold",
+        "s3:GetReplicationConfiguration"
+      ],
+      "Resource": [
+        "arn:aws:s3:::{}/*".format(source_bucket_name),
+        "arn:aws:s3:::{}".format(source_bucket_name)
+      ]
+    },
+    {
+      "Sid": "DestinationBucketPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ReplicateObject",
+        "s3:ObjectOwnerOverrideToBucketOwner",
+        "s3:GetObjectVersionTagging",
+        "s3:ReplicateTags",
+        "s3:ReplicateDelete"
+      ],
+      "Resource": [
+        "arn:aws:s3:::{}/*".format(dest_bucket_name)
+      ]
+     }
+    ]
+ }
+    
+  #Convert the IAM policy to a JSON string
+  iam_policy_json = json.dumps(iam_policy)
+    
+  #Set the IAM policy
+  iam.put_role_policy(
+    RoleName='Engineer',
+    PolicyName='S3ReplicationPermissions',
+    PolicyDocument=iam_policy_json
+   )
+    
+#Attaching a replication rule to the source bucket that will allow replication to the destination bucket
+def put_replication_rule_to_source_bucket(s3, source_bucket_name, dest_bucket_name):
+    
+    #Defining the replication rule (from source bucket to destination bucket)
+    bucket_rule={
+    "Role": "arn:aws:iam::721636561061:role/Engineer",
+    "Rules": [
+      {
+        "Status": "Enabled",
+        "Priority": 10,
+        "DeleteMarkerReplication": {
+          "Status": "Disabled"
+        },
+        "Filter": {
+          "Prefix": ""
+        },
+        "Destination": {
+          "Bucket": "arn:aws:s3:::{}".format(dest_bucket_name)
+        }
+      }
+     ]
+    }
+    
+    
+    #Setting the rule to the source bucket
+    s3.put_bucket_replication(
+    Bucket=source_bucket_name,
+    ReplicationConfiguration=bucket_rule
+    ) 
+
+#Attaching policy to destination bucket
+def add_policy_to_dest_bucket(s3, dest_bucket_name):
+    
+    #Adding S3 bucket policy to destination bucket to allow replication
+    bucket_policy={
+    "Version": "2012-10-17",
+    "Id": "PolicyForDestinationBucket",
+    "Statement": [
+         {
+      "Sid": "ReplicationPermissions",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::721636561061:role/Engineer"
+        },
+      "Action": [
+        "s3:ReplicateDelete",
+        "s3:ReplicateObject",
+        "s3:ObjectOwnerOverrideToBucketOwner",
+        "s3:GetBucketVersioning",
+        "s3:PutBucketVersioning"
+        ],
+      "Resource": [
+        "arn:aws:s3:::{}/*".format(dest_bucket_name),
+        "arn:aws:s3:::{}".format(dest_bucket_name)
+        ]  
+      }
+     ]
+    }
+    
+    # Convert the bucket policy to a JSON string
+    bucket_policy_json = json.dumps(bucket_policy)
+
+    # Set the bucket policy
+    s3.put_bucket_policy(
+        Bucket=dest_bucket_name,
+        Policy=bucket_policy_json
+    )
+    
+
+    
 
 
     
